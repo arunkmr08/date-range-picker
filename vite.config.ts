@@ -1,9 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react()],
-  base: "/date-range-picker/",
+  base: command === "build" ? "/date-range-picker/" : "/",
   build: {
     outDir:       "dist",
     sourcemap:    true,
@@ -13,4 +13,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));
