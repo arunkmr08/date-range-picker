@@ -1,0 +1,49 @@
+# How to push to GitHub
+
+The repo is already initialised with a git commit on `main`.
+Follow these steps to put it on GitHub.
+
+──────────────────────────────────────────────
+STEP 1 — Create the GitHub repository
+──────────────────────────────────────────────
+
+Option A — GitHub CLI (fastest):
+  gh repo create date-range-picker --public --source=. --remote=origin --push
+
+Option B — GitHub website:
+  1. Go to https://github.com/new
+  2. Name:        date-range-picker
+  3. Visibility:  Public (or Private)
+  4. ⚠  Do NOT initialise with README / .gitignore / licence — the repo is already set up
+  5. Click "Create repository"
+
+──────────────────────────────────────────────
+STEP 2 — Add the remote & push  (Option B only)
+──────────────────────────────────────────────
+
+Replace YOUR_USERNAME with your GitHub username, then run:
+
+  cd date-range-picker
+  git remote add origin https://github.com/YOUR_USERNAME/date-range-picker.git
+  git push -u origin main
+
+──────────────────────────────────────────────
+STEP 3 — Update the README badge  (optional)
+──────────────────────────────────────────────
+
+Open README.md and replace YOUR_USERNAME on this line:
+
+  ![CI](https://github.com/YOUR_USERNAME/date-range-picker/actions/workflows/ci.yml/badge.svg)
+
+──────────────────────────────────────────────
+STEP 4 — Verify CI passes
+──────────────────────────────────────────────
+
+Go to:  https://github.com/YOUR_USERNAME/date-range-picker/actions
+
+The "CI" workflow will run automatically on push.
+It runs:  tsc --noEmit  →  eslint  →  vite build
+
+All three pass locally — the build output was:
+  dist/assets/index-*.js    23 kB (gzip: 6.9 kB)
+  dist/assets/vendor-*.js  141 kB (gzip: 45 kB)   ← react + react-dom
