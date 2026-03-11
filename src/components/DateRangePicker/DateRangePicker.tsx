@@ -120,10 +120,10 @@ function getErrors(
 
 // ─── Shared inline styles ────────────────────────────────────────────────────
 const S: Record<string, CSSProperties> = {
-  navBtn:  { background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#bbb", padding: "0 4px", fontFamily: "inherit", lineHeight: 1 },
+  navBtn:  { background: "none", border: "none", cursor: "pointer", fontSize: 24, color: "#bbb", padding: "0 4px", fontFamily: "inherit", lineHeight: 1 },
   hdrBtn:  { background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "#111", padding: "2px 5px", fontFamily: "inherit", borderBottom: `1px dashed ${P}`, lineHeight: 1.2 },
   tick:    { background: "none", border: "none", cursor: "pointer", fontSize: 9,  color: "#ccc", padding: "1px 2px", fontFamily: "inherit", lineHeight: 1 },
-  timeNum: { width: 28, textAlign: "center", border: "none", background: "transparent", fontSize: 17, fontWeight: 400, color: "#111", outline: "none", fontFamily: "'Segoe UI Variable','Segoe UI',system-ui,sans-serif", padding: 0 },
+  timeNum: { width: 28, textAlign: "center", border: "none", background: "transparent", fontSize: 14, fontWeight: 400, color: "#111", outline: "none", fontFamily: "'Segoe UI Variable','Segoe UI',system-ui,sans-serif", padding: 0 },
 };
 
 // ─── Popup ───────────────────────────────────────────────────────────────────
@@ -160,7 +160,7 @@ const MonthPicker: FC<MonthPickerProps> = ({ month, onChange, onClose }) => (
       {MONTHS_SHORT.map((m, i) => (
         <button key={m} onClick={() => { onChange(i); onClose(); }} style={{
           background: month === i ? P : "none", border: "none", padding: "8px 6px",
-          fontSize: 13, color: month === i ? "#fff" : "#555", cursor: "pointer",
+          fontSize: 14, color: month === i ? "#fff" : "#555", cursor: "pointer",
           fontFamily: "inherit", fontWeight: month === i ? 500 : 400, transition: "all 0.1s",
         }}>{m}</button>
       ))}
@@ -185,7 +185,7 @@ const YearPicker: FC<YearPickerProps> = ({ year, onChange, onClose }) => {
           {Array.from({ length: 12 }, (_, i) => page + i).map(y => (
             <button key={y} onClick={() => { onChange(y); onClose(); }} style={{
               background: year === y ? P : "none", border: "none", padding: "8px 6px",
-              fontSize: 13, color: year === y ? "#fff" : "#555", cursor: "pointer",
+              fontSize: 14, color: year === y ? "#fff" : "#555", cursor: "pointer",
               fontFamily: "inherit", fontWeight: year === y ? 500 : 400, transition: "all 0.1s",
             }}>{y}</button>
           ))}
@@ -261,7 +261,7 @@ const Calendar: FC<CalendarProps> = ({
       {/* Day-of-week labels */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", marginBottom: 6 }}>
         {DAYS.map((d, i) => (
-          <div key={i} style={{ textAlign: "center", fontSize: 11, color: "#c4c4c4", paddingBottom: 6 }}>{d}</div>
+          <div key={i} style={{ textAlign: "center", fontSize: 12, color: "#c4c4c4", paddingBottom: 6 }}>{d}</div>
         ))}
       </div>
 
@@ -302,7 +302,7 @@ const Calendar: FC<CalendarProps> = ({
                   border: isToday && !sel ? `1px solid ${P}` : "none",
                   background: disabledReason ? (disabledReason === "maxrange" ? "#fff5f5" : "transparent") : sel ? P : "transparent",
                   color:      disabledReason ? "#d0d0d0" : sel ? "#fff" : isToday ? P : "#444",
-                  fontSize: 13, fontWeight: sel ? 500 : 400,
+                  fontSize: 14, fontWeight: sel ? 500 : 400,
                   cursor: disabledReason ? "not-allowed" : "pointer",
                   fontFamily: "inherit",
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -334,11 +334,11 @@ const TimeInput: FC<TimeInputProps> = ({ label, value, onChange, hasError }) => 
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <span style={{ fontSize: 11, color: hasError ? "#e05252" : "#bbb", letterSpacing: "0.08em" }}>{label}</span>
+      <span style={{ fontSize: 12, color: hasError ? "#e05252" : "#bbb", letterSpacing: "0.08em" }}>{label}</span>
       <div style={{ display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${hasError ? "#e05252" : "#e8e8e8"}`, paddingBottom: 2 }}>
         {([[h, setH], [m, setM]] as [number, (v: number) => void][]).map(([val, set], i) => (
           <React.Fragment key={i}>
-            {i === 1 && <span style={{ fontSize: 15, color: "#ddd", lineHeight: 1, margin: "0 1px" }}>:</span>}
+            {i === 1 && <span style={{ fontSize: 14, color: "#ddd", lineHeight: 1, margin: "0 1px" }}>:</span>}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
               <button onClick={() => set(val + 1)} style={S.tick}>▲</button>
               <input
@@ -372,8 +372,8 @@ const ErrorBanner: FC<ErrorBannerProps> = ({ errors }) => {
         const icon   = isErr ? "✕" : isWarn ? "⚠" : "ℹ";
         return (
           <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, background: bg, border: `1px solid ${bdr}`, padding: "8px 12px" }}>
-            <span style={{ fontSize: 12, color, marginTop: 1, flexShrink: 0, fontWeight: 600 }}>{icon}</span>
-            <span style={{ fontSize: 13, color, lineHeight: 1.5 }}>{e.msg}</span>
+            <span style={{ fontSize: 14, color, marginTop: 1, flexShrink: 0, fontWeight: 600 }}>{icon}</span>
+            <span style={{ fontSize: 14, color, lineHeight: 1.5 }}>{e.msg}</span>
           </div>
         );
       })}
@@ -405,7 +405,7 @@ const Toggle: FC<ToggleProps> = ({ label, description, checked, onChange }) => (
     </div>
     <div>
       <div style={{ fontSize: 14, color: "#222", fontWeight: 400 }}>{label}</div>
-      {description && <div style={{ fontSize: 12, color: "#aaa", marginTop: 3 }}>{description}</div>}
+      {description && <div style={{ fontSize: 13, color: "#aaa", marginTop: 3 }}>{description}</div>}
     </div>
   </label>
 );
@@ -415,14 +415,14 @@ interface StepperProps { value: number; onChange: (v: number) => void; min?: num
 
 const Stepper: FC<StepperProps> = ({ value, onChange, min = 1, max = 999 }) => (
   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-    <button onClick={() => onChange(Math.max(min, value - 1))} style={{ background: "none", border: "1px solid #e4e4e4", width: 26, height: 26, cursor: "pointer", fontSize: 15, color: "#888", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>−</button>
+    <button onClick={() => onChange(Math.max(min, value - 1))} style={{ background: "none", border: "1px solid #e4e4e4", width: 26, height: 26, cursor: "pointer", fontSize: 14, color: "#888", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>−</button>
     <input
       type="number" value={value} min={min} max={max}
       onChange={e => onChange(Math.max(min, Math.min(max, Number(e.target.value) || min)))}
       style={{ width: 50, textAlign: "center", border: "1px solid #e4e4e4", padding: "3px 4px", fontSize: 14, color: "#111", fontFamily: "inherit", outline: "none" }}
     />
-    <button onClick={() => onChange(Math.min(max, value + 1))} style={{ background: "none", border: "1px solid #e4e4e4", width: 26, height: 26, cursor: "pointer", fontSize: 15, color: "#888", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>+</button>
-    <span style={{ fontSize: 12, color: "#bbb" }}>days</span>
+    <button onClick={() => onChange(Math.min(max, value + 1))} style={{ background: "none", border: "1px solid #e4e4e4", width: 26, height: 26, cursor: "pointer", fontSize: 14, color: "#888", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>+</button>
+    <span style={{ fontSize: 13, color: "#bbb" }}>days</span>
   </div>
 );
 
@@ -513,7 +513,7 @@ const DateRangePicker: FC = () => {
 
       {/* ── Picker ── */}
       <div style={{ display: "flex", flexDirection: "column" }}>
-        <div style={{ fontSize: 11, color: "#aaa", letterSpacing: "0.12em", marginBottom: 12, textTransform: "uppercase" }}>Date Range Picker</div>
+        <div style={{ fontSize: 12, color: "#aaa", letterSpacing: "0.12em", marginBottom: 12, textTransform: "uppercase" }}>Date Range Picker</div>
         <div style={{ background: "#fff", border: "1px solid #e4e4e4", display: "flex", flexDirection: "column", width: "max-content" }}>
 
           <div style={{ display: "flex", position: "relative" }}>
@@ -521,11 +521,11 @@ const DateRangePicker: FC = () => {
             {/* Presets sidebar */}
             {!hidePresets && (
               <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 160, borderRight: "1px solid #ebebeb", display: "flex", flexDirection: "column", background: "#fff", zIndex: 1 }}>
-                <div style={{ padding: "20px 18px 12px", fontSize: 10, color: "#ccc", letterSpacing: "0.14em", textTransform: "uppercase", flexShrink: 0 }}>Presets</div>
+                <div style={{ padding: "20px 18px 12px", fontSize: 12, color: "#ccc", letterSpacing: "0.14em", textTransform: "uppercase", flexShrink: 0 }}>Presets</div>
                 <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", paddingBottom: 10 }}>
                   {SHORTCUTS.map((s, i) => (
                     <button key={s.label} onClick={() => pickShortcut(s, i)} style={{
-                      background: "none", border: "none", padding: "7px 18px", textAlign: "left", fontSize: 13,
+                      background: "none", border: "none", padding: "7px 18px", textAlign: "left", fontSize: 14,
                       color: active === i ? P : "#999", fontWeight: active === i ? 500 : 400,
                       cursor: "pointer", fontFamily: "inherit",
                       borderLeft: active === i ? `1.5px solid ${P}` : "1.5px solid transparent",
@@ -534,7 +534,7 @@ const DateRangePicker: FC = () => {
                   ))}
                   <div style={{ height: 1, background: "#f0f0f0", margin: "7px 0", flexShrink: 0 }} />
                   <button onClick={() => { clear(); setActive("custom"); }} style={{
-                    background: "none", border: "none", padding: "7px 18px", textAlign: "left", fontSize: 13,
+                    background: "none", border: "none", padding: "7px 18px", textAlign: "left", fontSize: 14,
                     color: active === "custom" ? P : "#999", fontWeight: active === "custom" ? 500 : 400,
                     cursor: "pointer", fontFamily: "inherit",
                     borderLeft: active === "custom" ? `1.5px solid ${P}` : "1.5px solid transparent",
@@ -572,11 +572,11 @@ const DateRangePicker: FC = () => {
             )}
 
             <div style={{ flex: 1, padding: hideTime ? "0" : "0 12px", minWidth: 160 }}>
-              <div style={{ fontSize: 11, color: "#ccc", letterSpacing: "0.1em", marginBottom: 5 }}>
+              <div style={{ fontSize: 12, color: "#ccc", letterSpacing: "0.1em", marginBottom: 5 }}>
                 {singleMode ? "SELECTED" : "SELECTION"}
               </div>
               {hideTime && !singleMode ? (
-                <div style={{ fontSize: 12, color: "#777", display: "flex", alignItems: "center", gap: 7 }}>
+                <div style={{ fontSize: 13, color: "#777", display: "flex", alignItems: "center", gap: 7 }}>
                   <span style={{ color: start && errors.some(e => e.type === "error" && e.msg.toLowerCase().includes("start")) ? "#c0392b" : "#777" }}>
                     {fmtDate(start)}
                   </span>
@@ -585,11 +585,11 @@ const DateRangePicker: FC = () => {
                     {fmtDate(end)}
                   </span>
                   {start && end && !hasErrors && (
-                    <span style={{ fontSize: 11, color: "#bbb" }}>· {dayDiff(start, end)} day{dayDiff(start, end) !== 1 ? "s" : ""}</span>
+                    <span style={{ fontSize: 12, color: "#bbb" }}>· {dayDiff(start, end)} day{dayDiff(start, end) !== 1 ? "s" : ""}</span>
                   )}
                 </div>
               ) : (
-                <div style={{ fontSize: 12, lineHeight: 1.8 }}>
+                <div style={{ fontSize: 13, lineHeight: 1.8 }}>
                   <div style={{ color: start && errors.some(e => e.type === "error" && e.msg.toLowerCase().includes("start")) ? "#c0392b" : "#777" }}>
                     {fmt(start, startTime)}
                   </div>
@@ -601,18 +601,18 @@ const DateRangePicker: FC = () => {
                 </div>
               )}
               {!hideTime && start && end && !singleMode && !hasErrors && (
-                <div style={{ fontSize: 11, color: "#bbb", marginTop: 3 }}>
+                <div style={{ fontSize: 12, color: "#bbb", marginTop: 3 }}>
                   {dayDiff(start, end)} day{dayDiff(start, end) !== 1 ? "s" : ""}
                 </div>
               )}
             </div>
 
             <div style={{ display: "flex", gap: 7 }}>
-              <button onClick={clear} style={{ background: "none", border: "1px solid #e8e8e8", padding: "8px 14px", fontSize: 12, color: "#bbb", cursor: "pointer", fontFamily: "inherit" }}>Clear</button>
+              <button onClick={clear} style={{ background: "none", border: "1px solid #e8e8e8", padding: "8px 14px", fontSize: 13, color: "#bbb", cursor: "pointer", fontFamily: "inherit" }}>Clear</button>
               <button
                 disabled={!canApply}
                 title={hasErrors ? "Fix errors before applying" : !start ? "Select a date first" : !end && !singleMode ? "Select an end date" : ""}
-                style={{ background: canApply ? P : "#f0f0f0", border: "none", padding: "8px 18px", fontSize: 12, color: canApply ? "#fff" : "#ccc", cursor: canApply ? "pointer" : "not-allowed", fontFamily: "inherit", fontWeight: 500, transition: "all 0.15s" }}
+                style={{ background: canApply ? P : "#f0f0f0", border: "none", padding: "8px 18px", fontSize: 13, color: canApply ? "#fff" : "#ccc", cursor: canApply ? "pointer" : "not-allowed", fontFamily: "inherit", fontWeight: 500, transition: "all 0.15s" }}
               >Apply</button>
             </div>
           </div>
@@ -621,10 +621,10 @@ const DateRangePicker: FC = () => {
 
       {/* ── Config panel ── */}
       <div style={{ display: "flex", flexDirection: "column", minWidth: 300, maxWidth: 340 }}>
-        <div style={{ fontSize: 11, color: "#aaa", letterSpacing: "0.12em", marginBottom: 12, textTransform: "uppercase" }}>Configuration</div>
+        <div style={{ fontSize: 12, color: "#aaa", letterSpacing: "0.12em", marginBottom: 12, textTransform: "uppercase" }}>Configuration</div>
         <div style={{ background: "#fff", border: "1px solid #e4e4e4" }}>
 
-          <div style={{ padding: "14px 20px 6px", fontSize: 10, color: "#ccc", letterSpacing: "0.14em", textTransform: "uppercase", borderBottom: "1px solid #f4f4f4" }}>Display</div>
+          <div style={{ padding: "14px 20px 6px", fontSize: 12, color: "#ccc", letterSpacing: "0.14em", textTransform: "uppercase", borderBottom: "1px solid #f4f4f4" }}>Display</div>
           <div style={{ padding: "0 20px" }}>
             <Toggle label="Hide presets"      description="Remove the shortcut sidebar"        checked={hidePresets}   onChange={() => setHidePresets(v => !v)} />
             <Toggle label="Hide time inputs"  description="Date-only, no hour/minute"          checked={hideTime}      onChange={() => setHideTime(v => !v)} />
@@ -632,7 +632,7 @@ const DateRangePicker: FC = () => {
             <Toggle label="Single date"       description="Pick one date, not a range"         checked={singleMode}    onChange={() => { setSingleMode(v => !v); clear(); }} />
           </div>
 
-          <div style={{ padding: "14px 20px 6px", fontSize: 10, color: "#ccc", letterSpacing: "0.14em", textTransform: "uppercase", borderTop: "1px solid #f0f0f0", borderBottom: "1px solid #f4f4f4", marginTop: 4 }}>Constraints</div>
+          <div style={{ padding: "14px 20px 6px", fontSize: 12, color: "#ccc", letterSpacing: "0.14em", textTransform: "uppercase", borderTop: "1px solid #f0f0f0", borderBottom: "1px solid #f4f4f4", marginTop: 4 }}>Constraints</div>
           <div style={{ padding: "0 20px" }}>
             <Toggle label="Disable future dates" description="Block selection of dates after today"  checked={noFuture}  onChange={() => { setNoFuture(v => !v);  clear(); }} />
             <Toggle label="Disable past dates"   description="Block selection of dates before today" checked={noPast}    onChange={() => { setNoPast(v => !v);    clear(); }} />
@@ -643,7 +643,7 @@ const DateRangePicker: FC = () => {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <div style={{ fontSize: 14, color: "#222" }}>Max range</div>
-                  <div style={{ fontSize: 12, color: "#aaa", marginTop: 3 }}>Limit how many days can be selected</div>
+                  <div style={{ fontSize: 13, color: "#aaa", marginTop: 3 }}>Limit how many days can be selected</div>
                 </div>
                 <div onClick={() => { setUseMaxDays(v => !v); clear(); }} style={{ width: 30, height: 17, borderRadius: 9, background: useMaxDays ? P : "#e0e0e0", position: "relative", cursor: "pointer", flexShrink: 0, transition: "background 0.2s" }}>
                   <div style={{ position: "absolute", top: 2, left: useMaxDays ? 13 : 2, width: 13, height: 13, borderRadius: "50%", background: "#fff", transition: "left 0.18s", boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }} />
@@ -657,7 +657,7 @@ const DateRangePicker: FC = () => {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <div style={{ fontSize: 14, color: "#222" }}>Min range</div>
-                  <div style={{ fontSize: 12, color: "#aaa", marginTop: 3 }}>Require a minimum number of days</div>
+                  <div style={{ fontSize: 13, color: "#aaa", marginTop: 3 }}>Require a minimum number of days</div>
                 </div>
                 <div onClick={() => { setUseMinDays(v => !v); clear(); }} style={{ width: 30, height: 17, borderRadius: 9, background: useMinDays ? P : "#e0e0e0", position: "relative", cursor: "pointer", flexShrink: 0, transition: "background 0.2s" }}>
                   <div style={{ position: "absolute", top: 2, left: useMinDays ? 13 : 2, width: 13, height: 13, borderRadius: "50%", background: "#fff", transition: "left 0.18s", boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }} />
