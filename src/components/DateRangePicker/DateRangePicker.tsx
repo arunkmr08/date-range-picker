@@ -14,6 +14,16 @@ export interface Theme {
   text: string; textSub: string; textMuted: string; textLight: string; textLighter: string;
   pageBg: string;
 }
+export interface DateRangeValue {
+  start: Date;
+  end: Date | null;
+  startTime: string;
+  endTime: string;
+}
+export interface DateRangePickerProps {
+  defaultValue?: Partial<DateRangeValue>;
+  onChange?: (value: DateRangeValue) => void;
+}
 type DisabledReason = "future" | "past" | "weekend" | "maxrange" | false;
 type ActivePreset   = number | "custom" | null;
 
@@ -372,15 +382,15 @@ const Stepper: FC<StepperProps> = ({ value, onChange, min = 1, max = 999, T }) =
 );
 
 // ─── DateRangePicker ──────────────────────────────────────────────────────────
-const DateRangePicker: FC = () => {
+const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) => {
   const now = td();
 
   // ── Picker state ─────────────────────────────────────────────────────────────
-  const [start,     setStart]     = useState<Date | null>(() => SHORTCUTS[2].get()[0]);
-  const [end,       setEnd]       = useState<Date | null>(() => SHORTCUTS[2].get()[1]);
+  const [start,     setStart]     = useState<Date | null>(() => defaultValue?.start ?? SHORTCUTS[2].get()[0]);
+  const [end,       setEnd]       = useState<Date | null>(() => defaultValue?.end ?? SHORTCUTS[2].get()[1]);
   const [hover,     setHover]     = useState<Date | null>(null);
-  const [startTime, setStartTime] = useState<string>("09:00");
-  const [endTime,   setEndTime]   = useState<string>("17:00");
+  const [startTime, setStartTime] = useState<string>(defaultValue?.startTime ?? "09:00");
+  const [endTime,   setEndTime]   = useState<string>(defaultValue?.endTime ?? "17:00");
   const [picking,   setPicking]   = useState<boolean>(false);
   const [lm,        setLm]        = useState<number>(now.getMonth());
   const [ly,        setLy]        = useState<number>(now.getFullYear());
@@ -561,6 +571,7 @@ const DateRangePicker: FC = () => {
               <button onClick={clear} style={{ background: "none", border: `1px solid ${T.border}`, padding: "8px 14px", fontSize: 13, color: T.textLighter, cursor: "pointer", fontFamily: "inherit" }}>Clear</button>
               <button
                 disabled={!canApply}
+                onClick={() => canApply && start && onChange?.({ start, end: singleMode ? null : end, startTime, endTime })}
                 title={hasErrors ? "Fix errors before applying" : !start ? "Select a date first" : !end && !singleMode ? "Select an end date" : ""}
                 style={{ background: canApply ? T.accent : (T.dark ? "#2a2a40" : "#f0f0f0"), border: "none", padding: "8px 18px", fontSize: 13, color: canApply ? "#fff" : T.textLighter, cursor: canApply ? "pointer" : "not-allowed", fontFamily: "inherit", fontWeight: 500, transition: "all 0.15s" }}
               >Apply</button>
