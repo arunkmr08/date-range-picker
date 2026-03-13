@@ -4,24 +4,25 @@ import userEvent from "@testing-library/user-event";
 import DateRangePicker from "../DateRangePicker";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const user = userEvent.setup();
+let user: ReturnType<typeof userEvent.setup>;
+beforeEach(() => { user = userEvent.setup(); });
 function getApplyBtn() { return screen.getByRole("button", { name: /apply/i }); }
 function getClearBtn()  { return screen.getByRole("button", { name: /clear/i }); }
 
 // ─── Smoke tests ─────────────────────────────────────────────────────────────
 describe("DateRangePicker – rendering", () => {
   it("renders without crashing", () => {
-    render(<DateRangePicker />);
+    render(<DateRangePicker defaultOpen />);
     expect(getApplyBtn()).toBeInTheDocument();
   });
 
   it("shows the Shortcuts sidebar by default", () => {
-    render(<DateRangePicker />);
+    render(<DateRangePicker defaultOpen />);
     expect(screen.getByText("Shortcuts")).toBeInTheDocument();
   });
 
   it("shows both Apply and Clear buttons", () => {
-    render(<DateRangePicker />);
+    render(<DateRangePicker defaultOpen />);
     expect(getApplyBtn()).toBeInTheDocument();
     expect(getClearBtn()).toBeInTheDocument();
   });
@@ -31,12 +32,12 @@ describe("DateRangePicker – rendering", () => {
 describe("DateRangePicker – defaultValue", () => {
   it("seeds start date from defaultValue", () => {
     const start = new Date(2024, 0, 15); // Jan 15 2024
-    render(<DateRangePicker defaultValue={{ start }} />);
-    expect(screen.getByText(/15 Jan 2024/i)).toBeInTheDocument();
+    render(<DateRangePicker defaultOpen defaultValue={{ start }} />);
+    expect(screen.getAllByText(/15 Jan 2024/i).length).toBeGreaterThan(0);
   });
 
   it("seeds startTime from defaultValue", () => {
-    render(<DateRangePicker defaultValue={{ startTime: "08:30" }} />);
+    render(<DateRangePicker defaultOpen defaultValue={{ startTime: "08:30" }} />);
     const inputs = screen.getAllByRole("spinbutton") as HTMLInputElement[];
     expect(inputs[0].value).toBe("08");
     expect(inputs[1].value).toBe("30");
@@ -46,7 +47,7 @@ describe("DateRangePicker – defaultValue", () => {
 // ─── onChange callback ────────────────────────────────────────────────────────
 describe("DateRangePicker – onChange", () => {
   it("Apply is disabled when no dates are selected", async () => {
-    render(<DateRangePicker />);
+    render(<DateRangePicker defaultOpen />);
     await user.click(getClearBtn());
     expect(getApplyBtn()).toBeDisabled();
   });
@@ -55,7 +56,7 @@ describe("DateRangePicker – onChange", () => {
     const onChange = vi.fn();
     const start = new Date(2024, 0, 10);
     const end   = new Date(2024, 0, 20);
-    render(<DateRangePicker defaultValue={{ start, end }} onChange={onChange} />);
+    render(<DateRangePicker defaultOpen defaultValue={{ start, end }} onChange={onChange} />);
 
     await user.click(getApplyBtn());
 
@@ -70,12 +71,12 @@ describe("DateRangePicker – onChange", () => {
   it("does not throw when onChange is not provided", async () => {
     const start = new Date(2024, 0, 10);
     const end   = new Date(2024, 0, 20);
-    render(<DateRangePicker defaultValue={{ start, end }} />);
+    render(<DateRangePicker defaultOpen defaultValue={{ start, end }} />);
     await user.click(getApplyBtn());
   });
 
   it("Apply is disabled while picking (first date clicked, second not yet)", async () => {
-    render(<DateRangePicker />);
+    render(<DateRangePicker defaultOpen />);
     await user.click(getClearBtn());
     expect(getApplyBtn()).toBeDisabled();
   });
@@ -86,7 +87,7 @@ describe("DateRangePicker – Clear", () => {
   it("clears selection and disables Apply", async () => {
     const start = new Date(2024, 0, 10);
     const end   = new Date(2024, 0, 20);
-    render(<DateRangePicker defaultValue={{ start, end }} />);
+    render(<DateRangePicker defaultOpen defaultValue={{ start, end }} />);
 
     expect(getApplyBtn()).not.toBeDisabled();
     await user.click(getClearBtn());
@@ -97,7 +98,7 @@ describe("DateRangePicker – Clear", () => {
 // ─── Shortcut sidebar ─────────────────────────────────────────────────────────
 describe("DateRangePicker – Shortcuts", () => {
   it("renders all expected shortcuts", () => {
-    render(<DateRangePicker />);
+    render(<DateRangePicker defaultOpen />);
     expect(screen.getByText("Yesterday")).toBeInTheDocument();
     expect(screen.getByText("Today")).toBeInTheDocument();
     expect(screen.getByText("Last 7 days")).toBeInTheDocument();
@@ -106,7 +107,7 @@ describe("DateRangePicker – Shortcuts", () => {
   });
 
   it("clicking a shortcut enables Apply", async () => {
-    render(<DateRangePicker />);
+    render(<DateRangePicker defaultOpen />);
     await user.click(getClearBtn());
     expect(getApplyBtn()).toBeDisabled();
 
@@ -117,7 +118,7 @@ describe("DateRangePicker – Shortcuts", () => {
   it("clicking Custom Date clears selection", async () => {
     const start = new Date(2024, 0, 10);
     const end   = new Date(2024, 0, 20);
-    render(<DateRangePicker defaultValue={{ start, end }} />);
+    render(<DateRangePicker defaultOpen defaultValue={{ start, end }} />);
 
     expect(getApplyBtn()).not.toBeDisabled();
     await user.click(screen.getByText("Custom Date"));
@@ -130,7 +131,7 @@ describe("DateRangePicker – validation helpers (unit)", () => {
   it("Apply is enabled with a valid range", () => {
     const start = new Date(2024, 0, 1);
     const end   = new Date(2024, 0, 7);
-    render(<DateRangePicker defaultValue={{ start, end }} />);
+    render(<DateRangePicker defaultOpen defaultValue={{ start, end }} />);
     expect(getApplyBtn()).not.toBeDisabled();
   });
 });
@@ -140,13 +141,13 @@ describe("DateRangePicker – SELECTION day count", () => {
   it("shows inclusive day count", () => {
     const start = new Date(2024, 0, 1);
     const end   = new Date(2024, 0, 7);
-    render(<DateRangePicker defaultValue={{ start, end }} />);
+    render(<DateRangePicker defaultOpen defaultValue={{ start, end }} />);
     expect(screen.getByText(/·\s*7 days/i)).toBeInTheDocument();
   });
 
   it("shows 1 day for a same-day range", () => {
     const d = new Date(2024, 0, 5);
-    render(<DateRangePicker defaultValue={{ start: d, end: d }} />);
+    render(<DateRangePicker defaultOpen defaultValue={{ start: d, end: d }} />);
     expect(screen.getByText(/·\s*1 day$/i)).toBeInTheDocument();
   });
 });

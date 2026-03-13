@@ -23,6 +23,7 @@ export interface DateRangeValue {
 export interface DateRangePickerProps {
   defaultValue?: Partial<DateRangeValue>;
   onChange?: (value: DateRangeValue) => void;
+  defaultOpen?: boolean;
 }
 type DisabledReason = "future" | "past" | "weekend" | "maxrange" | false;
 type ActivePreset   = number | "custom" | null;
@@ -382,7 +383,7 @@ const Stepper: FC<StepperProps> = ({ value, onChange, min = 1, max = 999, T }) =
 );
 
 // ─── DateRangePicker ──────────────────────────────────────────────────────────
-const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) => {
+const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange, defaultOpen = false }) => {
   const now = td();
 
   // ── Picker state ─────────────────────────────────────────────────────────────
@@ -421,6 +422,20 @@ const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) =
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  // ── Dropdown open state ───────────────────────────────────────────────────────
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isOpen || isMobile) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [isOpen, isMobile]);
 
   // ── Derived ───────────────────────────────────────────────────────────────────
   const rm: number = lm === 11 ? 0 : lm + 1;
@@ -475,6 +490,178 @@ const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) =
   const startErr = start && errors.some(e => e.type === "error" && e.msg.toLowerCase().includes("start"));
   const endErr   = end   && errors.some(e => e.type === "error" && e.msg.toLowerCase().includes("end"));
 
+  const triggerLabel = (() => {
+    if (!start) return null;
+    const s = hideTime ? fmtDate(start) : fmt(start, startTime);
+    if (singleMode || !end) return s;
+    return s + "  →  " + (hideTime ? fmtDate(end) : fmt(end, endTime));
+  })();
+
+  const handleApply = () => {
+    if (!canApply || !start) return;
+    onChange?.({ start, end: singleMode ? null : end, startTime, endTime });
+    setIsOpen(false);
+  };
+
+  const pickerCard = (
+    <div style={{
+      background: T.bg,
+      borderLeft: isMobile ? "none" : `1px solid ${T.border}`,
+      borderRight: isMobile ? "none" : `1px solid ${T.border}`,
+      borderTop: isMobile ? "none" : `1px solid ${T.border}`,
+      borderBottom: `1px solid ${T.border}`,
+      display: "flex", flexDirection: "column",
+      width: isMobile ? "100%" : "max-content",
+      boxShadow: isMobile ? "none" : "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)",
+      transition: "background 0.2s, border-color 0.2s",
+    }}>
+
+      {/* ── Sidebar + Calendars ── */}
+      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", position: "relative" }}>
+
+        {/* Desktop: absolute sidebar */}
+        {!hidePresets && !isMobile && (
+          <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 160, borderRight: `1px solid ${T.borderLight}`, display: "flex", flexDirection: "column", background: T.sidebar, zIndex: 1, transition: "background 0.2s" }}>
+            <div style={{ padding: "20px 18px 12px", fontSize: 12, color: T.textLighter, letterSpacing: "0.14em", textTransform: "uppercase", flexShrink: 0 }}>Shortcuts</div>
+            <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", paddingBottom: 10 }}>
+              <button onClick={() => { clear(); setActive("custom"); }} style={{
+                background: "none", border: "none", padding: "7px 18px", textAlign: "left", fontSize: 14,
+                color: active === "custom" ? T.accent : T.textLight, fontWeight: active === "custom" ? 500 : 400,
+                cursor: "pointer", fontFamily: "inherit",
+                borderLeft: active === "custom" ? `1.5px solid ${T.accent}` : "1.5px solid transparent",
+                transition: "all 0.1s", flexShrink: 0,
+              }}>Custom Date</button>
+              <div style={{ height: 1, background: T.borderLight, margin: "7px 0", flexShrink: 0 }} />
+              {SHORTCUTS.map((s, i) => (
+                <button key={s.label} onClick={() => pickShortcut(s, i)} style={{
+                  background: "none", border: "none", padding: "7px 18px", textAlign: "left", fontSize: 14,
+                  color: active === i ? T.accent : T.textLight, fontWeight: active === i ? 500 : 400,
+                  cursor: "pointer", fontFamily: "inherit",
+                  borderLeft: active === i ? `1.5px solid ${T.accent}` : "1.5px solid transparent",
+                  transition: "all 0.1s", flexShrink: 0,
+                }}>{s.label}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Mobile: horizontal chip strip */}
+        {!hidePresets && isMobile && (
+          <div className="drp-shortcuts-strip" style={{
+            overflowX: "auto", display: "flex", alignItems: "center",
+            padding: "10px 14px", gap: 6,
+            borderBottom: `1px solid ${T.borderLight}`,
+            background: T.sidebar,
+          }}>
+            <button onClick={() => { clear(); setActive("custom"); }} style={{
+              background: active === "custom" ? T.accent : T.bgAlt,
+              border: `1px solid ${active === "custom" ? T.accent : T.border}`,
+              borderRadius: 20, padding: "5px 12px", fontSize: 13,
+              color: active === "custom" ? "#fff" : T.textMuted,
+              cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
+            }}>Custom</button>
+            <div style={{ width: 1, height: 20, background: T.border, flexShrink: 0 }} />
+            {SHORTCUTS.map((s, i) => (
+              <button key={s.label} onClick={() => pickShortcut(s, i)} style={{
+                background: active === i ? T.accent : T.bgAlt,
+                border: `1px solid ${active === i ? T.accent : T.border}`,
+                borderRadius: 20, padding: "5px 12px", fontSize: 13,
+                color: active === i ? "#fff" : T.textMuted,
+                cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
+              }}>{s.label}</button>
+            ))}
+          </div>
+        )}
+
+        {/* Calendars */}
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, marginLeft: (!hidePresets && !isMobile) ? 160 : 0 }}>
+          <div style={{ display: "flex", padding: isMobile ? "20px 16px 16px" : "26px 26px 20px", gap: 0 }}>
+            <Calendar year={ly} month={lm} onNav={nav} onMonthChange={setLeftMonth} onYearChange={setLeftYear} start={start} end={end} hover={hover} onDay={pickDay} onHover={setHover} singleMode={singleMode} constraints={constraints} T={T} />
+            {!hideTwoMonths && !isMobile && (
+              <>
+                <div style={{ width: 1, background: T.borderLight, margin: "0 22px" }} />
+                <Calendar year={ry} month={rm} onNav={nav} onMonthChange={setRightMonth} onYearChange={setRightYear} start={start} end={end} hover={hover} onDay={pickDay} onHover={setHover} singleMode={singleMode} constraints={constraints} T={T} />
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Validation banners */}
+      <ErrorBanner errors={errors} T={T} />
+
+      {/* Bottom bar */}
+      <div style={{
+        borderTop: `1px solid ${T.borderLight}`,
+        display: "flex",
+        flexDirection: isMobile ? "column" : "row",
+        alignItems: isMobile ? "stretch" : "center",
+        justifyContent: "space-between",
+        padding: isMobile ? "14px 16px" : "14px 26px",
+        gap: isMobile ? 12 : 18,
+      }}>
+        {!hideTime && (
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 16 }}>
+            <TimeInput label="START" value={startTime} onChange={setStartTime} hasError={timeConflict} T={T} />
+            <div style={{ width: 12, height: 1, background: T.borderLight, marginBottom: 13 }} />
+            {!singleMode && <TimeInput label="END" value={endTime} onChange={setEndTime} hasError={timeConflict} T={T} />}
+          </div>
+        )}
+
+        {!isMobile && (
+          <div style={{ flex: 1, padding: hideTime ? "0" : "0 12px", minWidth: 160 }}>
+            <div style={{ fontSize: 12, color: T.textLighter, letterSpacing: "0.1em", marginBottom: 5, display: "flex", alignItems: "center", gap: 6 }}>
+              <span>{singleMode ? "SELECTED" : "SELECTION"}</span>
+              {!singleMode && start && end && !hasErrors && (
+                <span>· {dayDiff(start, end) + 1} day{dayDiff(start, end) + 1 !== 1 ? "s" : ""}</span>
+              )}
+            </div>
+            {hideTime && !singleMode ? (
+              <div style={{ fontSize: 13, color: T.textMuted, display: "flex", alignItems: "center", gap: 7 }}>
+                <span style={{ color: startErr ? "#c0392b" : T.textMuted }}>{fmtDate(start)}</span>
+                <span style={{ color: T.textLighter }}>→</span>
+                <span style={{ color: endErr ? "#c0392b" : T.textMuted }}>{fmtDate(end)}</span>
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, lineHeight: 1.8 }}>
+                <div style={{ color: startErr ? "#c0392b" : T.textMuted }}>{hideTime ? fmtDate(start) : fmt(start, startTime)}</div>
+                {!singleMode && <div style={{ color: endErr ? "#c0392b" : T.textMuted }}>{fmt(end, endTime)}</div>}
+              </div>
+            )}
+          </div>
+        )}
+
+        {isMobile && !singleMode && start && end && !hasErrors && (
+          <div style={{ fontSize: 12, color: T.textLighter, letterSpacing: "0.08em" }}>
+            {dayDiff(start, end) + 1} day{dayDiff(start, end) + 1 !== 1 ? "s" : ""} selected
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 7 }}>
+          <button onClick={clear} style={{
+            background: "none", border: `1px solid ${T.border}`,
+            padding: "8px 14px", fontSize: 13, color: T.textLighter,
+            cursor: "pointer", fontFamily: "inherit",
+            flex: isMobile ? 1 : undefined,
+          }}>Clear</button>
+          <button
+            disabled={!canApply}
+            onClick={handleApply}
+            title={hasErrors ? "Fix errors before applying" : !start ? "Select a date first" : !end && !singleMode ? "Select an end date" : ""}
+            style={{
+              background: canApply ? T.accent : (T.dark ? "#2a2a40" : "#f0f0f0"),
+              border: "none", padding: "8px 18px", fontSize: 13,
+              color: canApply ? "#fff" : T.textLighter,
+              cursor: canApply ? "pointer" : "not-allowed",
+              fontFamily: "inherit", fontWeight: 500, transition: "all 0.15s",
+              flex: isMobile ? 2 : undefined,
+            }}
+          >Apply</button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div style={{
       minHeight: "100vh", background: T.pageBg,
@@ -495,217 +682,87 @@ const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) =
         .drp-shortcuts-strip::-webkit-scrollbar { display: none; }
       `}</style>
 
-      {/* ── Picker ── */}
-      <div style={{ display: "flex", flexDirection: "column", width: isMobile ? "100%" : undefined }}>
+      {/* ── Picker column ── */}
+      <div ref={containerRef} style={{ display: "flex", flexDirection: "column", width: isMobile ? "100%" : undefined, position: "relative" }}>
         {!isMobile && <div style={{ fontSize: 12, color: T.textLight, letterSpacing: "0.12em", marginBottom: 12, textTransform: "uppercase" }}>Date Range Picker</div>}
-        <div style={{
-          background: T.bg, border: isMobile ? "none" : `1px solid ${T.border}`,
-          borderBottom: `1px solid ${T.border}`,
-          display: "flex", flexDirection: "column",
-          width: isMobile ? "100%" : "max-content",
-          boxShadow: isMobile ? "none" : "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)",
-          transition: "background 0.2s, border-color 0.2s",
-        }}>
 
-          {/* ── Selection Input Bar ── */}
-          <div style={{
-            padding: isMobile ? "12px 14px" : "12px 16px",
-            borderBottom: `1px solid ${T.borderLight}`,
+        {/* Trigger input */}
+        <div
+          onClick={() => setIsOpen(v => !v)}
+          style={{
             display: "flex", alignItems: "center", gap: 8,
-            background: T.bgAlt,
+            padding: "0 12px", height: 42,
+            border: `1.5px solid ${isOpen ? T.accent : T.border}`,
+            background: T.bg,
+            cursor: "pointer",
+            transition: "border-color 0.15s, background 0.2s",
+            minWidth: isMobile ? undefined : 300,
+            width: isMobile ? "100%" : undefined,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: isOpen ? T.accent : T.textMuted }}>
+            <rect x="1" y="2" width="14" height="13" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M1 6h14" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M5 1v2M11 1v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+          </svg>
+          <span style={{
+            flex: 1, fontSize: 14,
+            color: triggerLabel ? T.text : T.textLighter,
+            userSelect: "none", whiteSpace: "nowrap",
+            overflow: "hidden", textOverflow: "ellipsis",
           }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: T.accent }}>
-              <rect x="1" y="2" width="14" height="13" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-              <path d="M1 6h14" stroke="currentColor" strokeWidth="1.4"/>
-              <path d="M5 1v2M11 1v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            </svg>
-            <div style={{
-              flex: 1, display: "flex", alignItems: "center", minWidth: 0,
-              border: `1px solid ${(startErr || endErr) ? "#e05252" : T.border}`,
-              background: T.bg, overflow: "hidden",
-            }}>
-              <input
-                readOnly
-                placeholder="Start date"
-                value={start ? (hideTime ? fmtDate(start) : fmt(start, startTime)) : ""}
-                style={{
-                  flex: 1, padding: "7px 10px", border: "none", outline: "none",
-                  fontSize: isMobile ? 13 : 13, background: "transparent",
-                  color: startErr ? "#e05252" : start ? T.text : T.textLighter,
-                  fontFamily: "inherit", minWidth: 0, cursor: "default",
-                }}
-              />
-              {!singleMode && (
-                <>
-                  <span style={{ color: T.textLighter, fontSize: 11, flexShrink: 0, padding: "0 6px", userSelect: "none" }}>→</span>
-                  <input
-                    readOnly
-                    placeholder="End date"
-                    value={end ? (hideTime ? fmtDate(end) : fmt(end, endTime)) : ""}
-                    style={{
-                      flex: 1, padding: "7px 10px", border: "none", outline: "none",
-                      fontSize: 13, background: "transparent",
-                      color: endErr ? "#e05252" : end ? T.text : T.textLighter,
-                      fontFamily: "inherit", minWidth: 0, cursor: "default",
-                    }}
-                  />
-                </>
-              )}
-            </div>
-            {(start || end) && (
-              <button onClick={clear} style={{
+            {triggerLabel ?? "Select date range..."}
+          </span>
+          {(start || end) && (
+            <button
+              onClick={(e) => { e.stopPropagation(); clear(); }}
+              style={{
                 background: "none", border: "none", cursor: "pointer",
-                color: T.textLighter, fontSize: 18, padding: "2px 2px",
-                display: "flex", alignItems: "center", lineHeight: 1, fontFamily: "inherit", flexShrink: 0,
-              }}>×</button>
-            )}
-          </div>
-
-          {/* ── Sidebar + Calendars ── */}
-          <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", position: "relative" }}>
-
-            {/* Desktop: absolute sidebar */}
-            {!hidePresets && !isMobile && (
-              <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 160, borderRight: `1px solid ${T.borderLight}`, display: "flex", flexDirection: "column", background: T.sidebar, zIndex: 1, transition: "background 0.2s" }}>
-                <div style={{ padding: "20px 18px 12px", fontSize: 12, color: T.textLighter, letterSpacing: "0.14em", textTransform: "uppercase", flexShrink: 0 }}>Shortcuts</div>
-                <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", paddingBottom: 10 }}>
-                  <button onClick={() => { clear(); setActive("custom"); }} style={{
-                    background: "none", border: "none", padding: "7px 18px", textAlign: "left", fontSize: 14,
-                    color: active === "custom" ? T.accent : T.textLight, fontWeight: active === "custom" ? 500 : 400,
-                    cursor: "pointer", fontFamily: "inherit",
-                    borderLeft: active === "custom" ? `1.5px solid ${T.accent}` : "1.5px solid transparent",
-                    transition: "all 0.1s", flexShrink: 0,
-                  }}>Custom Date</button>
-                  <div style={{ height: 1, background: T.borderLight, margin: "7px 0", flexShrink: 0 }} />
-                  {SHORTCUTS.map((s, i) => (
-                    <button key={s.label} onClick={() => pickShortcut(s, i)} style={{
-                      background: "none", border: "none", padding: "7px 18px", textAlign: "left", fontSize: 14,
-                      color: active === i ? T.accent : T.textLight, fontWeight: active === i ? 500 : 400,
-                      cursor: "pointer", fontFamily: "inherit",
-                      borderLeft: active === i ? `1.5px solid ${T.accent}` : "1.5px solid transparent",
-                      transition: "all 0.1s", flexShrink: 0,
-                    }}>{s.label}</button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Mobile: horizontal chip strip */}
-            {!hidePresets && isMobile && (
-              <div className="drp-shortcuts-strip" style={{
-                overflowX: "auto", display: "flex", alignItems: "center",
-                padding: "10px 14px", gap: 6,
-                borderBottom: `1px solid ${T.borderLight}`,
-                background: T.sidebar,
-              }}>
-                <button onClick={() => { clear(); setActive("custom"); }} style={{
-                  background: active === "custom" ? T.accent : T.bgAlt,
-                  border: `1px solid ${active === "custom" ? T.accent : T.border}`,
-                  borderRadius: 20, padding: "5px 12px", fontSize: 13,
-                  color: active === "custom" ? "#fff" : T.textMuted,
-                  cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
-                }}>Custom</button>
-                <div style={{ width: 1, height: 20, background: T.border, flexShrink: 0 }} />
-                {SHORTCUTS.map((s, i) => (
-                  <button key={s.label} onClick={() => pickShortcut(s, i)} style={{
-                    background: active === i ? T.accent : T.bgAlt,
-                    border: `1px solid ${active === i ? T.accent : T.border}`,
-                    borderRadius: 20, padding: "5px 12px", fontSize: 13,
-                    color: active === i ? "#fff" : T.textMuted,
-                    cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
-                  }}>{s.label}</button>
-                ))}
-              </div>
-            )}
-
-            {/* Calendars */}
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, marginLeft: (!hidePresets && !isMobile) ? 160 : 0 }}>
-              <div style={{ display: "flex", padding: isMobile ? "20px 16px 16px" : "26px 26px 20px", gap: 0 }}>
-                <Calendar year={ly} month={lm} onNav={nav} onMonthChange={setLeftMonth} onYearChange={setLeftYear} start={start} end={end} hover={hover} onDay={pickDay} onHover={setHover} singleMode={singleMode} constraints={constraints} T={T} />
-                {!hideTwoMonths && !isMobile && (
-                  <>
-                    <div style={{ width: 1, background: T.borderLight, margin: "0 22px" }} />
-                    <Calendar year={ry} month={rm} onNav={nav} onMonthChange={setRightMonth} onYearChange={setRightYear} start={start} end={end} hover={hover} onDay={pickDay} onHover={setHover} singleMode={singleMode} constraints={constraints} T={T} />
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Validation banners */}
-          <ErrorBanner errors={errors} T={T} />
-
-          {/* Bottom bar */}
-          <div style={{
-            borderTop: `1px solid ${T.borderLight}`,
-            display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            alignItems: isMobile ? "stretch" : "center",
-            justifyContent: "space-between",
-            padding: isMobile ? "14px 16px" : "14px 26px",
-            gap: isMobile ? 12 : 18,
-          }}>
-            {!hideTime && (
-              <div style={{ display: "flex", alignItems: "flex-end", gap: 16 }}>
-                <TimeInput label="START" value={startTime} onChange={setStartTime} hasError={timeConflict} T={T} />
-                <div style={{ width: 12, height: 1, background: T.borderLight, marginBottom: 13 }} />
-                {!singleMode && <TimeInput label="END" value={endTime} onChange={setEndTime} hasError={timeConflict} T={T} />}
-              </div>
-            )}
-
-            {!isMobile && (
-              <div style={{ flex: 1, padding: hideTime ? "0" : "0 12px", minWidth: 160 }}>
-                <div style={{ fontSize: 12, color: T.textLighter, letterSpacing: "0.1em", marginBottom: 5, display: "flex", alignItems: "center", gap: 6 }}>
-                  <span>{singleMode ? "SELECTED" : "SELECTION"}</span>
-                  {!singleMode && start && end && !hasErrors && (
-                    <span>· {dayDiff(start, end) + 1} day{dayDiff(start, end) + 1 !== 1 ? "s" : ""}</span>
-                  )}
-                </div>
-                {hideTime && !singleMode ? (
-                  <div style={{ fontSize: 13, color: T.textMuted, display: "flex", alignItems: "center", gap: 7 }}>
-                    <span style={{ color: startErr ? "#c0392b" : T.textMuted }}>{fmtDate(start)}</span>
-                    <span style={{ color: T.textLighter }}>→</span>
-                    <span style={{ color: endErr ? "#c0392b" : T.textMuted }}>{fmtDate(end)}</span>
-                  </div>
-                ) : (
-                  <div style={{ fontSize: 13, lineHeight: 1.8 }}>
-                    <div style={{ color: startErr ? "#c0392b" : T.textMuted }}>{hideTime ? fmtDate(start) : fmt(start, startTime)}</div>
-                    {!singleMode && <div style={{ color: endErr ? "#c0392b" : T.textMuted }}>{fmt(end, endTime)}</div>}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {isMobile && !singleMode && start && end && !hasErrors && (
-              <div style={{ fontSize: 12, color: T.textLighter, letterSpacing: "0.08em" }}>
-                {dayDiff(start, end) + 1} day{dayDiff(start, end) + 1 !== 1 ? "s" : ""} selected
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: 7 }}>
-              <button onClick={clear} style={{
-                background: "none", border: `1px solid ${T.border}`,
-                padding: "8px 14px", fontSize: 13, color: T.textLighter,
-                cursor: "pointer", fontFamily: "inherit",
-                flex: isMobile ? 1 : undefined,
-              }}>Clear</button>
-              <button
-                disabled={!canApply}
-                onClick={() => canApply && start && onChange?.({ start, end: singleMode ? null : end, startTime, endTime })}
-                title={hasErrors ? "Fix errors before applying" : !start ? "Select a date first" : !end && !singleMode ? "Select an end date" : ""}
-                style={{
-                  background: canApply ? T.accent : (T.dark ? "#2a2a40" : "#f0f0f0"),
-                  border: "none", padding: "8px 18px", fontSize: 13,
-                  color: canApply ? "#fff" : T.textLighter,
-                  cursor: canApply ? "pointer" : "not-allowed",
-                  fontFamily: "inherit", fontWeight: 500, transition: "all 0.15s",
-                  flex: isMobile ? 2 : undefined,
-                }}
-              >Apply</button>
-            </div>
-          </div>
+                color: T.textLighter, fontSize: 18, padding: "0 2px",
+                display: "flex", alignItems: "center", lineHeight: 1,
+                fontFamily: "inherit", flexShrink: 0,
+              }}
+            >×</button>
+          )}
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, color: T.textMuted, transition: "transform 0.15s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+            <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </div>
+
+        {/* Desktop dropdown */}
+        {isOpen && !isMobile && (
+          <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 1000 }}>
+            {pickerCard}
+          </div>
+        )}
       </div>
+
+      {/* Mobile full-screen overlay */}
+      {isOpen && isMobile && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: T.pageBg, display: "flex", flexDirection: "column", overflowY: "auto" }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "12px 16px", borderBottom: `1px solid ${T.borderLight}`,
+            background: T.bg, flexShrink: 0,
+          }}>
+            <button
+              onClick={() => setIsOpen(false)}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                color: T.text, fontFamily: "inherit", fontSize: 14,
+                display: "flex", alignItems: "center", gap: 6, padding: 0,
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Back
+            </button>
+            <span style={{ flex: 1, textAlign: "center", fontSize: 14, fontWeight: 500, color: T.text }}>Select Date Range</span>
+          </div>
+          {pickerCard}
+        </div>
+      )}
 
       {/* ── Config panel ── */}
       <div style={{ display: "flex", flexDirection: "column", width: isMobile ? "100%" : undefined }}>
@@ -716,7 +773,9 @@ const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) =
         }}>Configuration</div>
         <div style={{
           background: T.bg,
-          border: isMobile ? "none" : `1px solid ${T.border}`,
+          borderLeft: isMobile ? "none" : `1px solid ${T.border}`,
+          borderRight: isMobile ? "none" : `1px solid ${T.border}`,
+          borderBottom: isMobile ? "none" : `1px solid ${T.border}`,
           borderTop: `1px solid ${T.border}`,
           transition: "background 0.2s, border-color 0.2s",
         }}>
