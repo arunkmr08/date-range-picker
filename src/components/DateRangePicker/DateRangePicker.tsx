@@ -414,6 +414,14 @@ const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) =
   const [accent,   setAccent]   = useState(ACCENTS[0].value);
   const T = makeTheme(accent, darkMode);
 
+  // ── Mobile detection ─────────────────────────────────────────────────────────
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 640);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   // ── Derived ───────────────────────────────────────────────────────────────────
   const rm: number = lm === 11 ? 0 : lm + 1;
   const ry: number = lm === 11 ? ly + 1 : ly;
@@ -464,12 +472,17 @@ const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) =
   );
 
   // ── Render ────────────────────────────────────────────────────────────────────
+  const startErr = start && errors.some(e => e.type === "error" && e.msg.toLowerCase().includes("start"));
+  const endErr   = end   && errors.some(e => e.type === "error" && e.msg.toLowerCase().includes("end"));
+
   return (
     <div style={{
       minHeight: "100vh", background: T.pageBg,
       display: "flex", alignItems: "flex-start", justifyContent: "center",
       fontFamily: "'Segoe UI Variable','Segoe UI',system-ui,sans-serif",
-      paddingTop: 56, paddingBottom: 56, gap: 32, flexWrap: "wrap",
+      paddingTop: isMobile ? 0 : 56, paddingBottom: isMobile ? 0 : 56,
+      gap: isMobile ? 0 : 32, flexWrap: "wrap",
+      flexDirection: isMobile ? "column" : "row",
       transition: "background 0.2s",
     }}>
       <style>{`
@@ -478,17 +491,81 @@ const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) =
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
         button:focus { outline: none; }
         button:hover { opacity: 0.7; }
+        .drp-shortcuts-strip { scrollbar-width: none; }
+        .drp-shortcuts-strip::-webkit-scrollbar { display: none; }
       `}</style>
 
       {/* ── Picker ── */}
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        <div style={{ fontSize: 12, color: T.textLight, letterSpacing: "0.12em", marginBottom: 12, textTransform: "uppercase" }}>Date Range Picker</div>
-        <div style={{ background: T.bg, border: `1px solid ${T.border}`, display: "flex", flexDirection: "column", width: "max-content", boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)", transition: "background 0.2s, border-color 0.2s" }}>
+      <div style={{ display: "flex", flexDirection: "column", width: isMobile ? "100%" : undefined }}>
+        {!isMobile && <div style={{ fontSize: 12, color: T.textLight, letterSpacing: "0.12em", marginBottom: 12, textTransform: "uppercase" }}>Date Range Picker</div>}
+        <div style={{
+          background: T.bg, border: isMobile ? "none" : `1px solid ${T.border}`,
+          borderBottom: `1px solid ${T.border}`,
+          display: "flex", flexDirection: "column",
+          width: isMobile ? "100%" : "max-content",
+          boxShadow: isMobile ? "none" : "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)",
+          transition: "background 0.2s, border-color 0.2s",
+        }}>
 
-          <div style={{ display: "flex", position: "relative" }}>
+          {/* ── Selection Input Bar ── */}
+          <div style={{
+            padding: isMobile ? "12px 14px" : "12px 16px",
+            borderBottom: `1px solid ${T.borderLight}`,
+            display: "flex", alignItems: "center", gap: 8,
+            background: T.bgAlt,
+          }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: T.accent }}>
+              <rect x="1" y="2" width="14" height="13" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+              <path d="M1 6h14" stroke="currentColor" strokeWidth="1.4"/>
+              <path d="M5 1v2M11 1v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+            <div style={{
+              flex: 1, display: "flex", alignItems: "center", minWidth: 0,
+              border: `1px solid ${(startErr || endErr) ? "#e05252" : T.border}`,
+              background: T.bg, overflow: "hidden",
+            }}>
+              <input
+                readOnly
+                placeholder="Start date"
+                value={start ? (hideTime ? fmtDate(start) : fmt(start, startTime)) : ""}
+                style={{
+                  flex: 1, padding: "7px 10px", border: "none", outline: "none",
+                  fontSize: isMobile ? 13 : 13, background: "transparent",
+                  color: startErr ? "#e05252" : start ? T.text : T.textLighter,
+                  fontFamily: "inherit", minWidth: 0, cursor: "default",
+                }}
+              />
+              {!singleMode && (
+                <>
+                  <span style={{ color: T.textLighter, fontSize: 11, flexShrink: 0, padding: "0 6px", userSelect: "none" }}>→</span>
+                  <input
+                    readOnly
+                    placeholder="End date"
+                    value={end ? (hideTime ? fmtDate(end) : fmt(end, endTime)) : ""}
+                    style={{
+                      flex: 1, padding: "7px 10px", border: "none", outline: "none",
+                      fontSize: 13, background: "transparent",
+                      color: endErr ? "#e05252" : end ? T.text : T.textLighter,
+                      fontFamily: "inherit", minWidth: 0, cursor: "default",
+                    }}
+                  />
+                </>
+              )}
+            </div>
+            {(start || end) && (
+              <button onClick={clear} style={{
+                background: "none", border: "none", cursor: "pointer",
+                color: T.textLighter, fontSize: 18, padding: "2px 2px",
+                display: "flex", alignItems: "center", lineHeight: 1, fontFamily: "inherit", flexShrink: 0,
+              }}>×</button>
+            )}
+          </div>
 
-            {/* Shortcuts sidebar */}
-            {!hidePresets && (
+          {/* ── Sidebar + Calendars ── */}
+          <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", position: "relative" }}>
+
+            {/* Desktop: absolute sidebar */}
+            {!hidePresets && !isMobile && (
               <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 160, borderRight: `1px solid ${T.borderLight}`, display: "flex", flexDirection: "column", background: T.sidebar, zIndex: 1, transition: "background 0.2s" }}>
                 <div style={{ padding: "20px 18px 12px", fontSize: 12, color: T.textLighter, letterSpacing: "0.14em", textTransform: "uppercase", flexShrink: 0 }}>Shortcuts</div>
                 <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", paddingBottom: 10 }}>
@@ -513,11 +590,39 @@ const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) =
               </div>
             )}
 
+            {/* Mobile: horizontal chip strip */}
+            {!hidePresets && isMobile && (
+              <div className="drp-shortcuts-strip" style={{
+                overflowX: "auto", display: "flex", alignItems: "center",
+                padding: "10px 14px", gap: 6,
+                borderBottom: `1px solid ${T.borderLight}`,
+                background: T.sidebar,
+              }}>
+                <button onClick={() => { clear(); setActive("custom"); }} style={{
+                  background: active === "custom" ? T.accent : T.bgAlt,
+                  border: `1px solid ${active === "custom" ? T.accent : T.border}`,
+                  borderRadius: 20, padding: "5px 12px", fontSize: 13,
+                  color: active === "custom" ? "#fff" : T.textMuted,
+                  cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
+                }}>Custom</button>
+                <div style={{ width: 1, height: 20, background: T.border, flexShrink: 0 }} />
+                {SHORTCUTS.map((s, i) => (
+                  <button key={s.label} onClick={() => pickShortcut(s, i)} style={{
+                    background: active === i ? T.accent : T.bgAlt,
+                    border: `1px solid ${active === i ? T.accent : T.border}`,
+                    borderRadius: 20, padding: "5px 12px", fontSize: 13,
+                    color: active === i ? "#fff" : T.textMuted,
+                    cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
+                  }}>{s.label}</button>
+                ))}
+              </div>
+            )}
+
             {/* Calendars */}
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, marginLeft: hidePresets ? 0 : 160 }}>
-              <div style={{ display: "flex", padding: "26px 26px 20px", gap: 0 }}>
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, marginLeft: (!hidePresets && !isMobile) ? 160 : 0 }}>
+              <div style={{ display: "flex", padding: isMobile ? "20px 16px 16px" : "26px 26px 20px", gap: 0 }}>
                 <Calendar year={ly} month={lm} onNav={nav} onMonthChange={setLeftMonth} onYearChange={setLeftYear} start={start} end={end} hover={hover} onDay={pickDay} onHover={setHover} singleMode={singleMode} constraints={constraints} T={T} />
-                {!hideTwoMonths && (
+                {!hideTwoMonths && !isMobile && (
                   <>
                     <div style={{ width: 1, background: T.borderLight, margin: "0 22px" }} />
                     <Calendar year={ry} month={rm} onNav={nav} onMonthChange={setRightMonth} onYearChange={setRightYear} start={start} end={end} hover={hover} onDay={pickDay} onHover={setHover} singleMode={singleMode} constraints={constraints} T={T} />
@@ -531,7 +636,15 @@ const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) =
           <ErrorBanner errors={errors} T={T} />
 
           {/* Bottom bar */}
-          <div style={{ borderTop: `1px solid ${T.borderLight}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 26px", gap: 18, flexWrap: "wrap" }}>
+          <div style={{
+            borderTop: `1px solid ${T.borderLight}`,
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            alignItems: isMobile ? "stretch" : "center",
+            justifyContent: "space-between",
+            padding: isMobile ? "14px 16px" : "14px 26px",
+            gap: isMobile ? 12 : 18,
+          }}>
             {!hideTime && (
               <div style={{ display: "flex", alignItems: "flex-end", gap: 16 }}>
                 <TimeInput label="START" value={startTime} onChange={setStartTime} hasError={timeConflict} T={T} />
@@ -540,40 +653,54 @@ const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) =
               </div>
             )}
 
-            <div style={{ flex: 1, padding: hideTime ? "0" : "0 12px", minWidth: 160 }}>
-              <div style={{ fontSize: 12, color: T.textLighter, letterSpacing: "0.1em", marginBottom: 5, display: "flex", alignItems: "center", gap: 6 }}>
-                <span>{singleMode ? "SELECTED" : "SELECTION"}</span>
-                {!singleMode && start && end && !hasErrors && (
-                  <span>· {dayDiff(start, end) + 1} day{dayDiff(start, end) + 1 !== 1 ? "s" : ""}</span>
-                )}
-              </div>
-              {hideTime && !singleMode ? (
-                <div style={{ fontSize: 13, color: T.textMuted, display: "flex", alignItems: "center", gap: 7 }}>
-                  <span style={{ color: start && errors.some(e => e.type === "error" && e.msg.toLowerCase().includes("start")) ? "#c0392b" : T.textMuted }}>{fmtDate(start)}</span>
-                  <span style={{ color: T.textLighter }}>→</span>
-                  <span style={{ color: end && errors.some(e => e.type === "error" && e.msg.toLowerCase().includes("end")) ? "#c0392b" : T.textMuted }}>{fmtDate(end)}</span>
-                </div>
-              ) : (
-                <div style={{ fontSize: 13, lineHeight: 1.8 }}>
-                  <div style={{ color: start && errors.some(e => e.type === "error" && e.msg.toLowerCase().includes("start")) ? "#c0392b" : T.textMuted }}>
-                    {hideTime ? fmtDate(start) : fmt(start, startTime)}
-                  </div>
-                  {!singleMode && (
-                    <div style={{ color: end && errors.some(e => e.type === "error" && e.msg.toLowerCase().includes("end")) ? "#c0392b" : T.textMuted }}>
-                      {fmt(end, endTime)}
-                    </div>
+            {!isMobile && (
+              <div style={{ flex: 1, padding: hideTime ? "0" : "0 12px", minWidth: 160 }}>
+                <div style={{ fontSize: 12, color: T.textLighter, letterSpacing: "0.1em", marginBottom: 5, display: "flex", alignItems: "center", gap: 6 }}>
+                  <span>{singleMode ? "SELECTED" : "SELECTION"}</span>
+                  {!singleMode && start && end && !hasErrors && (
+                    <span>· {dayDiff(start, end) + 1} day{dayDiff(start, end) + 1 !== 1 ? "s" : ""}</span>
                   )}
                 </div>
-              )}
-            </div>
+                {hideTime && !singleMode ? (
+                  <div style={{ fontSize: 13, color: T.textMuted, display: "flex", alignItems: "center", gap: 7 }}>
+                    <span style={{ color: startErr ? "#c0392b" : T.textMuted }}>{fmtDate(start)}</span>
+                    <span style={{ color: T.textLighter }}>→</span>
+                    <span style={{ color: endErr ? "#c0392b" : T.textMuted }}>{fmtDate(end)}</span>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 13, lineHeight: 1.8 }}>
+                    <div style={{ color: startErr ? "#c0392b" : T.textMuted }}>{hideTime ? fmtDate(start) : fmt(start, startTime)}</div>
+                    {!singleMode && <div style={{ color: endErr ? "#c0392b" : T.textMuted }}>{fmt(end, endTime)}</div>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isMobile && !singleMode && start && end && !hasErrors && (
+              <div style={{ fontSize: 12, color: T.textLighter, letterSpacing: "0.08em" }}>
+                {dayDiff(start, end) + 1} day{dayDiff(start, end) + 1 !== 1 ? "s" : ""} selected
+              </div>
+            )}
 
             <div style={{ display: "flex", gap: 7 }}>
-              <button onClick={clear} style={{ background: "none", border: `1px solid ${T.border}`, padding: "8px 14px", fontSize: 13, color: T.textLighter, cursor: "pointer", fontFamily: "inherit" }}>Clear</button>
+              <button onClick={clear} style={{
+                background: "none", border: `1px solid ${T.border}`,
+                padding: "8px 14px", fontSize: 13, color: T.textLighter,
+                cursor: "pointer", fontFamily: "inherit",
+                flex: isMobile ? 1 : undefined,
+              }}>Clear</button>
               <button
                 disabled={!canApply}
                 onClick={() => canApply && start && onChange?.({ start, end: singleMode ? null : end, startTime, endTime })}
                 title={hasErrors ? "Fix errors before applying" : !start ? "Select a date first" : !end && !singleMode ? "Select an end date" : ""}
-                style={{ background: canApply ? T.accent : (T.dark ? "#2a2a40" : "#f0f0f0"), border: "none", padding: "8px 18px", fontSize: 13, color: canApply ? "#fff" : T.textLighter, cursor: canApply ? "pointer" : "not-allowed", fontFamily: "inherit", fontWeight: 500, transition: "all 0.15s" }}
+                style={{
+                  background: canApply ? T.accent : (T.dark ? "#2a2a40" : "#f0f0f0"),
+                  border: "none", padding: "8px 18px", fontSize: 13,
+                  color: canApply ? "#fff" : T.textLighter,
+                  cursor: canApply ? "pointer" : "not-allowed",
+                  fontFamily: "inherit", fontWeight: 500, transition: "all 0.15s",
+                  flex: isMobile ? 2 : undefined,
+                }}
               >Apply</button>
             </div>
           </div>
@@ -581,13 +708,26 @@ const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) =
       </div>
 
       {/* ── Config panel ── */}
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        <div style={{ fontSize: 12, color: T.textLight, letterSpacing: "0.12em", marginBottom: 12, textTransform: "uppercase" }}>Configuration</div>
-        <div style={{ background: T.bg, border: `1px solid ${T.border}`, transition: "background 0.2s, border-color 0.2s" }}>
+      <div style={{ display: "flex", flexDirection: "column", width: isMobile ? "100%" : undefined }}>
+        <div style={{
+          fontSize: 12, color: T.textLight, letterSpacing: "0.12em",
+          margin: isMobile ? "20px 14px 10px" : "0 0 12px",
+          textTransform: "uppercase",
+        }}>Configuration</div>
+        <div style={{
+          background: T.bg,
+          border: isMobile ? "none" : `1px solid ${T.border}`,
+          borderTop: `1px solid ${T.border}`,
+          transition: "background 0.2s, border-color 0.2s",
+        }}>
 
           {/* Display + Constraints */}
-          <div style={{ display: "flex" }}>
-            <div style={{ flex: 1, padding: "0 20px", borderRight: `1px solid ${T.borderLight}` }}>
+          <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row" }}>
+            <div style={{
+              flex: 1, padding: "0 20px",
+              borderRight: isMobile ? "none" : `1px solid ${T.borderLight}`,
+              borderBottom: isMobile ? `1px solid ${T.borderLight}` : "none",
+            }}>
               <div style={{ padding: "14px 0 6px", fontSize: 12, color: T.textLighter, letterSpacing: "0.14em", textTransform: "uppercase" }}>Display</div>
               <Toggle label="Hide presets"      description="Remove the shortcut sidebar"  checked={hidePresets}   onChange={() => setHidePresets(v => !v)} T={T} />
               <Toggle label="Hide time inputs"  description="Date-only, no hour/minute"    checked={hideTime}      onChange={() => setHideTime(v => !v)} T={T} />
@@ -603,8 +743,12 @@ const DateRangePicker: FC<DateRangePickerProps> = ({ defaultValue, onChange }) =
           </div>
 
           {/* Max + Min range */}
-          <div style={{ display: "flex", borderTop: `1px solid ${T.borderLight}` }}>
-            <div style={{ flex: 1, padding: "14px 20px", borderRight: `1px solid ${T.borderLight}` }}>
+          <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", borderTop: `1px solid ${T.borderLight}` }}>
+            <div style={{
+              flex: 1, padding: "14px 20px",
+              borderRight: isMobile ? "none" : `1px solid ${T.borderLight}`,
+              borderBottom: isMobile ? `1px solid ${T.borderLight}` : "none",
+            }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                 {knob(useMaxDays, () => { setUseMaxDays(v => !v); clear(); })}
                 <div>
