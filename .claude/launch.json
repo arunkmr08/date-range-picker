@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "date-range-picker",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "/Users/zono/.nvm/versions/node/v22.12.0/bin/node",
+      "runtimeArgs": ["node_modules/vite/bin/vite.js", "--port", "5173"],
       "port": 5173
     }
   ]

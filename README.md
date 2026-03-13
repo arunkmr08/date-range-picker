@@ -2,36 +2,101 @@
 
 A fully-featured, zero-dependency React date range picker — written in TypeScript.
 
-![CI](https://github.com/YOUR_USERNAME/date-range-picker/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/arunkmr08/date-range-picker/actions/workflows/ci.yml/badge.svg)](https://github.com/arunkmr08/date-range-picker/actions)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+
+**[Live demo →](https://arunkmr08.github.io/date-range-picker/)**
 
 ---
 
 ## Features
 
 - **Dual-month calendar** — or single month, configurable
-- **12 preset shortcuts** — Today, Last 7/14/30 days, This/Last week, month, year, and more
+- **11 preset shortcuts** — Yesterday, Today, Last 7 days, Last/This week, Last/This month, Last 3/6 months, Last/This year till Date
 - **Custom range** — click any two dates; preset highlights automatically
-- **Time inputs** — HH:MM spinners for start and end time
+- **Time inputs** — HH:MM spinners for start and end time (hideable)
 - **Single-date mode** — collapses range UI to a single pick
 - **Clickable month/year headers** — popover grid pickers
 - **Constraints** — disable future/past dates, weekends, set min/max range in days
-- **Inline validation** — error / warning / info banners, Apply blocked on errors
+- **Inline validation** — error / warning banners, Apply blocked on errors
+- **Theme system** — light/dark mode + 6 accent colour presets
+- **`onChange` callback** — fires on Apply with full range value
 - **Zero dependencies** — React 18 only
 - **Fully typed** — complete TypeScript interfaces exported
 
 ---
 
-## Getting Started
+## Usage
 
-```bash
-npm install
-npm run dev
+```tsx
+import DateRangePicker from "./components/DateRangePicker";
+import type { DateRangeValue } from "./components/DateRangePicker";
+
+function App() {
+  const handleChange = (value: DateRangeValue) => {
+    console.log(value.start, value.end, value.startTime, value.endTime);
+  };
+
+  return (
+    <DateRangePicker
+      defaultValue={{ startTime: "09:00", endTime: "18:00" }}
+      onChange={handleChange}
+    />
+  );
+}
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+---
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `defaultValue` | `Partial<DateRangeValue>` | — | Initial start/end dates and times |
+| `onChange` | `(value: DateRangeValue) => void` | — | Called when the user clicks **Apply** |
+
+---
+
+## `DateRangeValue`
+
+The object passed to `onChange`:
+
+```ts
+interface DateRangeValue {
+  start:     Date;         // selected start date
+  end:       Date | null;  // selected end date (null in single-date mode)
+  startTime: string;       // "HH:MM"
+  endTime:   string;       // "HH:MM"
+}
+```
+
+---
+
+## Exported Types
+
+```ts
+import type {
+  DateRangeValue,
+  DateRangePickerProps,
+  ValidationMessage,
+  ErrorSeverity,
+  Shortcut,
+  Constraints,
+  Theme,
+} from "./components/DateRangePicker";
+```
+
+| Type | Description |
+|------|-------------|
+| `DateRangeValue` | The value emitted by `onChange` |
+| `DateRangePickerProps` | Full props interface |
+| `ErrorSeverity` | `"error" \| "warning" \| "info"` |
+| `ValidationMessage` | `{ type: ErrorSeverity; msg: string }` |
+| `Shortcut` | `{ label: string; get: () => [Date, Date] }` |
+| `Constraints` | `{ noFuture, noPast, noWeekends, maxDays, minDays }` |
+| `Theme` | Full theme token object |
 
 ---
 
@@ -42,6 +107,9 @@ Open [http://localhost:5173](http://localhost:5173).
 | `npm run dev` | Start Vite dev server |
 | `npm run build` | Type-check + production build |
 | `npm run preview` | Preview production build locally |
+| `npm test` | Run Vitest test suite |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run coverage` | Generate coverage report |
 | `npm run lint` | Run ESLint |
 | `npm run type-check` | Run `tsc --noEmit` |
 
@@ -54,37 +122,20 @@ date-range-picker/
 ├── src/
 │   ├── components/
 │   │   └── DateRangePicker/
-│   │       ├── DateRangePicker.tsx   # Component + all sub-components
-│   │       └── index.ts              # Barrel export
+│   │       ├── DateRangePicker.tsx        # Component + all sub-components
+│   │       ├── index.ts                   # Barrel export
+│   │       └── __tests__/
+│   │           └── DateRangePicker.test.tsx
+│   ├── test/
+│   │   └── setup.ts                       # Vitest + jest-dom setup
 │   ├── App.tsx
 │   └── main.tsx
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                    # Type-check → Lint → Build
-├── index.html
+│       └── ci.yml                         # Type-check → Lint → Build → Test
 ├── vite.config.ts
-├── tsconfig.json
-├── tsconfig.app.json
-├── tsconfig.node.json
-├── eslint.config.js
 └── package.json
 ```
-
----
-
-## Exported Types
-
-```ts
-import DateRangePicker from "./components/DateRangePicker";
-import type { ValidationMessage, ErrorSeverity, Shortcut, Constraints } from "./components/DateRangePicker";
-```
-
-| Type | Description |
-|------|-------------|
-| `ErrorSeverity` | `"error" \| "warning" \| "info"` |
-| `ValidationMessage` | `{ type: ErrorSeverity; msg: string }` |
-| `Shortcut` | `{ label: string; get: () => [Date, Date] }` |
-| `Constraints` | `{ noFuture, noPast, noWeekends, maxDays, minDays }` |
 
 ---
 
@@ -97,27 +148,6 @@ Three severity levels are surfaced inline above the bottom bar:
 | ℹ | Info | No |
 | ⚠ | Warning | No |
 | ✕ | Error | **Yes** |
-
----
-
-## Theme
-
-Two constants at the top of `DateRangePicker.tsx` control all colour usage:
-
-```ts
-const P       = "#32A7E8"; // primary — buttons, active states, Apply
-const P_LIGHT = "rgba(50,167,232,0.10)"; // range fill tint
-```
-
----
-
-## CI
-
-Every push and pull request to `main` runs:
-
-1. `tsc --noEmit` — TypeScript type check
-2. `eslint` — lint
-3. `vite build` — production build
 
 ---
 
