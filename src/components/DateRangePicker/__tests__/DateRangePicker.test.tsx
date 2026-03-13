@@ -1,15 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DateRangePicker from "../DateRangePicker";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getApplyBtn() { return screen.getByRole("button", { name: /apply/i }); }
 function getClearBtn()  { return screen.getByRole("button", { name: /clear/i }); }
-function getDayBtn(label: string) {
-  return screen.getByRole("button", { name: new RegExp(label, "i") });
-}
-
 // ─── Smoke tests ─────────────────────────────────────────────────────────────
 describe("DateRangePicker – rendering", () => {
   it("renders without crashing", () => {
