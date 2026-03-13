@@ -4,8 +4,10 @@ import userEvent from "@testing-library/user-event";
 import DateRangePicker from "../DateRangePicker";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+const user = userEvent.setup();
 function getApplyBtn() { return screen.getByRole("button", { name: /apply/i }); }
 function getClearBtn()  { return screen.getByRole("button", { name: /clear/i }); }
+
 // ─── Smoke tests ─────────────────────────────────────────────────────────────
 describe("DateRangePicker – rendering", () => {
   it("renders without crashing", () => {
@@ -30,15 +32,12 @@ describe("DateRangePicker – defaultValue", () => {
   it("seeds start date from defaultValue", () => {
     const start = new Date(2024, 0, 15); // Jan 15 2024
     render(<DateRangePicker defaultValue={{ start }} />);
-    // The formatted date appears in the SELECTION display
     expect(screen.getByText(/15 Jan 2024/i)).toBeInTheDocument();
   });
 
   it("seeds startTime from defaultValue", () => {
     render(<DateRangePicker defaultValue={{ startTime: "08:30" }} />);
-    // time inputs render the hours/minutes as separate number inputs
     const inputs = screen.getAllByRole("spinbutton") as HTMLInputElement[];
-    // First two inputs are start hour (08) and start minute (30)
     expect(inputs[0].value).toBe("08");
     expect(inputs[1].value).toBe("30");
   });
@@ -48,7 +47,7 @@ describe("DateRangePicker – defaultValue", () => {
 describe("DateRangePicker – onChange", () => {
   it("Apply is disabled when no dates are selected", async () => {
     render(<DateRangePicker />);
-    await userEvent.click(getClearBtn());
+    await user.click(getClearBtn());
     expect(getApplyBtn()).toBeDisabled();
   });
 
@@ -58,7 +57,7 @@ describe("DateRangePicker – onChange", () => {
     const end   = new Date(2024, 0, 20);
     render(<DateRangePicker defaultValue={{ start, end }} onChange={onChange} />);
 
-    await userEvent.click(getApplyBtn());
+    await user.click(getApplyBtn());
 
     expect(onChange).toHaveBeenCalledOnce();
     const value = onChange.mock.calls[0][0];
@@ -72,14 +71,12 @@ describe("DateRangePicker – onChange", () => {
     const start = new Date(2024, 0, 10);
     const end   = new Date(2024, 0, 20);
     render(<DateRangePicker defaultValue={{ start, end }} />);
-    await userEvent.click(getApplyBtn());
-    // No error thrown = pass
+    await user.click(getApplyBtn());
   });
 
   it("Apply is disabled while picking (first date clicked, second not yet)", async () => {
     render(<DateRangePicker />);
-    await userEvent.click(getClearBtn());
-    // After clear, no dates are set → Apply disabled
+    await user.click(getClearBtn());
     expect(getApplyBtn()).toBeDisabled();
   });
 });
@@ -92,7 +89,7 @@ describe("DateRangePicker – Clear", () => {
     render(<DateRangePicker defaultValue={{ start, end }} />);
 
     expect(getApplyBtn()).not.toBeDisabled();
-    await userEvent.click(getClearBtn());
+    await user.click(getClearBtn());
     expect(getApplyBtn()).toBeDisabled();
   });
 });
@@ -110,11 +107,10 @@ describe("DateRangePicker – Shortcuts", () => {
 
   it("clicking a shortcut enables Apply", async () => {
     render(<DateRangePicker />);
-    await userEvent.click(getClearBtn());
+    await user.click(getClearBtn());
     expect(getApplyBtn()).toBeDisabled();
 
-    await userEvent.click(screen.getByText("Today"));
-    // Today = single-day range → Apply should become enabled
+    await user.click(screen.getByText("Today"));
     expect(getApplyBtn()).not.toBeDisabled();
   });
 
@@ -124,7 +120,7 @@ describe("DateRangePicker – Shortcuts", () => {
     render(<DateRangePicker defaultValue={{ start, end }} />);
 
     expect(getApplyBtn()).not.toBeDisabled();
-    await userEvent.click(screen.getByText("Custom Date"));
+    await user.click(screen.getByText("Custom Date"));
     expect(getApplyBtn()).toBeDisabled();
   });
 });
@@ -142,11 +138,9 @@ describe("DateRangePicker – validation helpers (unit)", () => {
 // ─── SELECTION day count ──────────────────────────────────────────────────────
 describe("DateRangePicker – SELECTION day count", () => {
   it("shows inclusive day count", () => {
-    // Jan 1 → Jan 7 = 7 days inclusive
     const start = new Date(2024, 0, 1);
     const end   = new Date(2024, 0, 7);
     render(<DateRangePicker defaultValue={{ start, end }} />);
-    // The inline count renders as "· 7 days" next to the SELECTION label
     expect(screen.getByText(/·\s*7 days/i)).toBeInTheDocument();
   });
 
